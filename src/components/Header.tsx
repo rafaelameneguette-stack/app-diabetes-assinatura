@@ -1,62 +1,89 @@
-'use client';
+"use client"
 
-import { useEffect, useMemo, useState } from 'react';
-import { Bell, Heart } from 'lucide-react';
+import { useState, useEffect } from 'react'
+import { Clock, Bell } from 'lucide-react'
+
+interface Medication {
+  id: string
+  name: string
+  dosage: string
+  time: string
+  taken: boolean
+}
 
 interface HeaderProps {
-  initialTimeISO: string;
-  nextMed?: {
-    id: string;
-    name: string;
-    time: string;
-  } | null;
+  initialTimeISO: string
+  nextMed?: Medication
 }
 
 export default function Header({ initialTimeISO, nextMed }: HeaderProps) {
-  const fmt = useMemo(
-    () =>
-      new Intl.DateTimeFormat('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'America/Sao_Paulo',
-      }),
-    []
-  );
-
-  // ⚠️ A PRIMEIRA renderização usa o mesmo valor do SSR:
-  const [now, setNow] = useState(() => fmt.format(new Date(initialTimeISO)));
+  const [currentTime, setCurrentTime] = useState(new Date(initialTimeISO))
 
   useEffect(() => {
-    const update = () => setNow(fmt.format(new Date()));
-    const id = setInterval(update, 60_000);
-    return () => clearInterval(id);
-  }, [fmt]);
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      second: '2-digit'
+    })
+  }
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
 
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
-              <Heart className="w-6 h-6 text-white" />
+            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">DC</span>
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-              DiabetCare
-            </h1>
+            <h1 className="text-xl font-bold text-gray-900">DiabetCare</h1>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-600">
-              {now}
+
+          {/* Time and Next Medication */}
+          <div className="flex items-center space-x-6">
+            {/* Current Time */}
+            <div className="flex items-center space-x-2 text-gray-600">
+              <Clock className="w-4 h-4" />
+              <div className="text-right">
+                <div className="text-sm font-medium">{formatTime(currentTime)}</div>
+                <div className="text-xs text-gray-500">{formatDate(currentTime)}</div>
+              </div>
             </div>
-            <div className="relative">
-              <Bell className="w-6 h-6 text-gray-600" />
-              {nextMed && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-              )}
+
+            {/* Next Medication Alert */}
+            {nextMed && (
+              <div className="flex items-center space-x-2 bg-emerald-50 text-emerald-700 px-3 py-2 rounded-lg">
+                <Bell className="w-4 h-4" />
+                <div className="text-sm">
+                  <span className="font-medium">Próxima:</span> {nextMed.name} às {nextMed.time}
+                </div>
+              </div>
+            )}
+
+            {/* User Avatar */}
+            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+              <span className="text-gray-600 text-sm font-medium">U</span>
             </div>
           </div>
         </div>
       </div>
     </header>
-  );
+  )
 }
