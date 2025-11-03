@@ -17,9 +17,14 @@ interface HeaderProps {
 }
 
 export default function Header({ initialTimeISO, nextMed }: HeaderProps) {
-  const [currentTime, setCurrentTime] = useState(new Date(initialTimeISO))
+  const [currentTime, setCurrentTime] = useState(() => new Date(initialTimeISO))
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
+    // Marca que o componente foi montado no cliente
+    setIsMounted(true)
+    
+    // Configura timer para atualizações de tempo
     const timer = setInterval(() => {
       setCurrentTime(new Date())
     }, 1000)
@@ -44,6 +49,10 @@ export default function Header({ initialTimeISO, nextMed }: HeaderProps) {
     })
   }
 
+  // Sempre usa o tempo inicial durante SSR e hidratação
+  // Só após montar no cliente que usa o tempo real
+  const displayTime = isMounted ? currentTime : new Date(initialTimeISO)
+
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -62,8 +71,12 @@ export default function Header({ initialTimeISO, nextMed }: HeaderProps) {
             <div className="flex items-center space-x-2 text-gray-600">
               <Clock className="w-4 h-4" />
               <div className="text-right">
-                <div className="text-sm font-medium">{formatTime(currentTime)}</div>
-                <div className="text-xs text-gray-500">{formatDate(currentTime)}</div>
+                <div className="text-sm font-medium">
+                  {formatTime(displayTime)}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {formatDate(displayTime)}
+                </div>
               </div>
             </div>
 
